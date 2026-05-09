@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Download Domain Router + Local AI</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">Chrome download organizer</p>
+          <h1>Download Domain Router + Local AI</h1>
+          <p class="muted">Manual domain rules first. Optional Chrome local AI or OpenAI classification for unmatched downloads.</p>
+        </div>
+        <label class="switch-row">
+          <input id="enabled" type="checkbox" />
+          <span>Enabled</span>
+        </label>
+      </header>
+
+      <section class="card">
+        <h2>Fallback behavior</h2>
+        <div class="settings-grid">
+          <label>
+            Default folder for unmatched downloads
+            <input id="defaultFolder" type="text" placeholder="To Review" />
+          </label>
+          <label class="checkbox-row">
+            <input id="routeUnmatched" type="checkbox" />
+            Route unmatched downloads to the default folder
+          </label>
+        </div>
+        <p class="hint">Folder paths are relative to Chrome’s Downloads directory. Example: <code>Law/Cases</code> becomes <code>~/Downloads/Law/Cases</code> on macOS.</p>
+      </section>
+
+      <section class="card warning-card">
+        <div class="section-header">
+          <h2>AI classification</h2>
+          <label class="switch-row small-switch">
+            <input id="aiEnabled" type="checkbox" />
+            <span>Use AI for unmatched downloads</span>
+          </label>
+        </div>
+
+        <div class="ai-grid">
+          <label>
+            AI provider
+            <select id="aiProvider">
+              <option value="chrome">Chrome local AI / Gemini Nano</option>
+              <option value="openai">OpenAI API</option>
+            </select>
+          </label>
+          <label>
+            Auto-route confidence threshold
+            <input id="aiMinConfidence" type="number" min="0" max="1" step="0.05" />
+          </label>
+          <label>
+            OpenAI model
+            <input id="aiModel" type="text" placeholder="gpt-5-nano" />
+          </label>
+          <label>
+            OpenAI API key
+            <input id="aiApiKey" type="password" autocomplete="off" placeholder="sk-..." />
+          </label>
+          <label>
+            Max OpenAI file upload size, MB
+            <input id="aiMaxFileMb" type="number" min="1" max="24" step="1" />
+          </label>
+          <label class="checkbox-row">
+            <input id="aiSendFile" type="checkbox" />
+            OpenAI: send file content when fetchable
+          </label>
+          <label class="checkbox-row span-2">
+            <input id="aiOnlyUnmatched" type="checkbox" />
+            Do not call AI when a manual domain rule already matches
+          </label>
+        </div>
+
+        <div class="local-ai-panel">
+          <button id="checkLocalAi" type="button" class="secondary">Check Chrome local AI availability</button>
+          <span id="localAiStatus" class="status-pill">Not checked</span>
+        </div>
+
+
+        <label class="span-2">
+          Additional folders AI is allowed to choose
+          <textarea id="aiExtraFoldersText" rows="7" spellcheck="false" placeholder="Shipping/Commercial&#10;Shipping/Strategy&#10;Law/Cases&#10;To Review"></textarea>
+        </label>
+        <p class="hint">AI cannot invent folders. Add folders here even when you do not yet have a domain rule for them.</p>
+
+        <p class="hint">Chrome local AI sends metadata to Gemini Nano running in Chrome, when available. OpenAI can optionally receive file content; Chrome local AI mode uses metadata only in this version.</p>
+      </section>
+
+      <section class="card">
+        <div class="section-header">
+          <h2>Prompt template</h2>
+          <button id="resetPrompt" type="button" class="secondary">Reset prompt</button>
+        </div>
+        <label>
+          Prompt sent to the selected AI provider
+          <textarea id="aiPromptTemplate" rows="15" spellcheck="false"></textarea>
+        </label>
+        <p class="hint">Available placeholders: <code>{{allowedFolders}}</code>, <code>{{allowedFoldersJson}}</code>, <code>{{defaultFolder}}</code>, <code>{{metadataJson}}</code>, <code>{{filename}}</code>, <code>{{hostname}}</code>, <code>{{url}}</code>, <code>{{mime}}</code>, <code>{{referrer}}</code>.</p>
+      </section>
+
+      <section class="card">
+        <div class="section-header">
+          <h2>Domain registry</h2>
+          <div class="actions">
+            <button id="addRule" type="button">Add rule</button>
+            <button id="exportRules" type="button" class="secondary">Export JSON</button>
+            <label class="button-like secondary">
+              Import JSON
+              <input id="importRules" type="file" accept="application/json,.json" hidden />
+            </label>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>On</th>
+                <th>Domain</th>
+                <th>Folder</th>
+                <th>Notes</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="rulesBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="section-header">
+          <h2>Recent routes</h2>
+          <button id="clearRecent" type="button" class="secondary">Clear</button>
+        </div>
+        <div id="recentRoutes" class="recent-list"></div>
+      </section>
+
+      <footer class="footer"><span id="status" role="status"></span></footer>
+    </main>
+
+    <template id="ruleRowTemplate">
+      <tr>
+        <td><input data-field="enabled" type="checkbox" /></td>
+        <td><input data-field="domain" type="text" placeholder="example.com or *.example.com" /></td>
+        <td><input data-field="folder" type="text" placeholder="Law/Cases" /></td>
+        <td><input data-field="notes" type="text" placeholder="Optional" /></td>
+        <td class="row-actions">
+          <button data-action="up" type="button" title="Move up">↑</button>
+          <button data-action="down" type="button" title="Move down">↓</button>
+          <button data-action="delete" type="button" class="danger" title="Delete">Delete</button>
+        </td>
+      </tr>
+    </template>
+
+    <script src="options.js"></script>
+  </body>
+</html>
